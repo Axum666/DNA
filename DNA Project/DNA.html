@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<title>DNA</title>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+		<style>
+			body {
+				background-color: #000;
+				margin: 0px;
+				overflow: hidden;
+				font-family:Monospace;
+				font-size:13px;
+				text-align:center;
+				font-weight: bold;
+				text-align:center;
+			}
+
+			#info {
+				color: #fff;
+				position: absolute;
+				top: 0px; width: 100%;
+				padding: 5px;
+				z-index: 100;
+			}
+
+		</style>
+	</head>
+	<body>
+
+		<div id="info">
+			DNA
+		</div>
+
+		<script src="js/libs/three.min.js"></script>
+		<script type='text/javascript' src='http://code.jquery.com/jquery-1.4.2.js'></script>
+
+		<script src="js/libs/Detector.js"></script>
+
+		<script>
+
+			if ( ! Detector.webgl ) Detector.addGetWebGLMessage();
+
+			var container;
+			var camera, scene, renderer;
+			var mouseX = 0, mouseY = 0;
+
+			var windowHalfX = window.innerWidth / 2;
+			var windowHalfY = window.innerHeight / 2;
+
+			var dna;
+
+			var rotation = 0;
+
+			init();
+			animate();
+
+			function init() 
+			{
+				container = document.createElement( 'div' );
+				document.body.appendChild( container );
+
+				camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 1, 200 );
+				camera.position.z = 75;
+
+				scene = new THREE.Scene();
+
+				renderer = new THREE.WebGLRenderer();
+				renderer.setPixelRatio( window.devicePixelRatio );
+				renderer.setSize( window.innerWidth, window.innerHeight );
+				container.appendChild( renderer.domElement );
+
+				var light = new THREE.AmbientLight( 0x111111 ); // soft white light
+				scene.add( light );
+
+				var directionalLight = new THREE.DirectionalLight( 0xffffff, 0.5 );
+				directionalLight.position.set( 1, 1, 1 );
+				scene.add( directionalLight );
+
+				initDNA();
+
+				document.addEventListener( 'mousemove', onDocumentMouseMove, false );
+				window.addEventListener( 'resize', onWindowResize, false );
+			}
+
+			function initDNA() 
+			{
+				dna = new THREE.Object3D();
+
+				var sphereGeometry = new THREE.SphereGeometry( 0.65, 20, 20 );
+				var sphere, cylinder, cylinderGeometry;
+				var colors = [new THREE.Color(1,0,0), new THREE.Color(0,1,0), new THREE.Color(0,0,1), new THREE.Color(1,1,0), new THREE.Color(1,0,1), new THREE.Color(0,1,1)];
+
+				var angle = 0
+
+				for(var i = 0; i <= 200; i++)
+				{
+					var yPos = i - 100;
+
+					sphere = new THREE.Mesh( sphereGeometry, new THREE.MeshPhongMaterial( {color: 0x00aaff} ));
+					sphere.position.y = yPos;
+					sphere.position.x = 5 * Math.sin(angle);
+					sphere.position.z = 5 * Math.cos(angle);
+					dna.add( sphere );
+
+					sphere = new THREE.Mesh( sphereGeometry, new THREE.MeshPhongMaterial( {color: 0x00ff00} ));
+					sphere.position.y = yPos;
+					sphere.position.x = 5 * Math.sin(angle + Math.PI);
+					sphere.position.z = 5 * Math.cos(angle + Math.PI);
+					dna.add( sphere );
+
+					if(i % 5 == 0)
+					{
+						var height = 2 + Math.random() * 6;
+						cylinderGeometry = new THREE.CylinderGeometry( .5, .5, height, 20 );
+
+						var material = new THREE.MeshPhongMaterial();
+						material.color = colors[Math.floor(Math.random() * 6)];
+
+						cylinder = new THREE.Mesh( cylinderGeometry, material );
+						cylinder.position.y = yPos;
+						cylinder.position.x = (5 - (height / 2.0)) * Math.sin(angle + Math.PI);
+						cylinder.position.z = (5 - (height / 2.0)) * Math.cos(angle + Math.PI);
+
+						cylinder.rotation.x = 0;
+						cylinder.rotation.y = angle + Math.PI / 2.0;
+						cylinder.rotation.z = Math.PI / 2.0;
+						dna.add( cylinder );
+
+						material = new THREE.MeshPhongMaterial();
+
+						material = new THREE.MeshPhongMaterial();
+						material.color = colors[Math.floor(Math.random() * 6)];
+
+						cylinderGeometry = new THREE.CylinderGeometry( .5, .5, 10 - height, 20 );
+
+						cylinder = new THREE.Mesh( cylinderGeometry, material );
+						cylinder.position.y = yPos;
+						cylinder.position.x = (((10 - height) / 2.0) - 5) * Math.sin(angle + Math.PI);
+						cylinder.position.z = (((10 - height) / 2.0) -5) * Math.cos(angle + Math.PI);
+
+						cylinder.rotation.x = 0;
+						cylinder.rotation.y = angle + Math.PI / 2.0;
+						cylinder.rotation.z = Math.PI / 2.0;
+						dna.add( cylinder );
+					}
+
+
+					angle += 2 * Math.PI / 50;
+				}
+
+				scene.add(dna);
+			}
+
+			function onWindowResize() 
+			{
+				windowHalfX = window.innerWidth / 2;
+				windowHalfY = window.innerHeight / 2;
+
+				camera.aspect = window.innerWidth / window.innerHeight;
+				camera.updateProjectionMatrix();
+
+				renderer.setSize( window.innerWidth, window.innerHeight );
+			}
+
+			function onDocumentMouseMove( event ) 
+			{
+				mouseX = event.clientX - windowHalfX;
+				mouseY = event.clientY - windowHalfY;
+			}
+
+			function animate() 
+			{
+				dna.rotation.y += rotation;
+
+				requestAnimationFrame( animate );
+				render();
+			}
+
+			function render() 
+			{
+				var time = Date.now() * 0.00005;
+				renderer.render( scene, camera );
+			}
+
+			$(document).keydown(function(evt) {
+				
+				switch (evt.keyCode) 
+				{
+					case 87://w
+						camera.position.y += .5;
+						break;
+					case 65://a
+						rotation = .025;
+						break;
+					case 83://s
+						camera.position.y -= .5;
+						break;
+					case 68://d
+						rotation = -.025;
+						break;
+					case 32://space
+						rotation = 0;
+						break;
+					default:
+						console.log(evt.keyCode);
+						break;
+				}
+			});
+
+			jQuery(document).ready(function($){
+				$(document).bind('mousewheel', function(e){
+					if(e.wheelDelta/120 > 0) {
+						camera.position.z -= 1;
+					}
+					else{
+						camera.position.z += 1;
+					}
+				});
+			});
+
+
+		</script>
+	</body>
+</html>
